@@ -87,17 +87,17 @@ class Results extends Component {
     convertToRub(val,cur){
         const values = this.props.currency.cbrf.Valute
         if(values[cur]){
-            return +val*values[cur].Value
+            return (+val*values[cur].Value).toFixed(2)
         }
-        return val
+        return val.toFixed(2) 
     }
 
     convertRubTo(val,cur){
         const values = this.props.currency.cbrf.Valute
         if(values[cur]){
-            return +val/values[cur].Value
+            return (+val/values[cur].Value).toFixed(2)
         }
-        return val        
+        return val.toFixed(2)        
     }
 
     computeROI(){

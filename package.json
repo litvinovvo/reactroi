@@ -3,7 +3,7 @@
   "license": "MIT",
   "version": "1.0.0",
   "description": "Get started with Semantic UI React and Webpack 3",
-    "homepage": "https://litvinovvo.github.io/reactroi",
+    "homepage": "https://litvinovvo.github.io",
   "dependencies": {
     "history": "^4.6.3",
     "immutable": "^3.8.1",

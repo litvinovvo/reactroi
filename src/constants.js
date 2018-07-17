@@ -9,3 +9,5 @@ export const LOAD_PRESET = 'LOAD_PRESET'
 
 export const ADD_FIELD = 'ADD_FIELD'
 export const REMOVE_FIELD = 'REMOVE_FIELD'
+
+export const LOAD_CURRENCY = 'LOAD_CURRENCY'

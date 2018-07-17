@@ -1,4 +1,4 @@
-import {INCREMENT, START, SUCCESS, FAIL, UPDATE_FORM, INIT_FORM, ADD_FIELD, REMOVE_FIELD, LOAD_PRESET} from '../constants'
+import {INCREMENT, START, SUCCESS, FAIL, UPDATE_FORM, INIT_FORM, ADD_FIELD, REMOVE_FIELD, LOAD_PRESET, LOAD_CURRENCY} from '../constants'
 import {push, replace} from 'react-router-redux'
 import { focus,change } from 'redux-form'
 
@@ -108,8 +108,9 @@ export function addField(field) {
             payload: field,
             randomId: randomId
         })
-        dispatch(change('simple',field.type + randomId + 'currency',"rub"))
-        dispatch(focus('simple',field.type + randomId + 'input'))
+//        dispatch(change('simple',field.type + randomId + 'currency',"rub"))
+        
+        dispatch(focus('simple',`${field.type}[${field.index}].input`))
 //        setTimeout(()=>{
 //            dispatch(focus('simple',field.type + randomId))
 //        },
@@ -118,6 +119,37 @@ export function addField(field) {
 
 
     }
+}
+
+export function loadCurrency(){
+    return (dispatch) => {
+        dispatch({
+            type: LOAD_CURRENCY + START
+        })
+        setTimeout(() => {
+            console.log('time to fetch')
+            fetch('https://www.cbr-xml-daily.ru/daily_json.js')
+                .then(res => {
+                    if (res.status >= 400) {
+                        throw new Error(res.statusText)
+                    }
+                    return res.json()
+                })
+                .then(response => dispatch({
+                    type: LOAD_CURRENCY + SUCCESS,
+                    payload: { response }
+                }))
+                .catch(error => {
+                    dispatch({
+                        type: LOAD_CURRENCY + FAIL,
+                        payload: { error }
+                    })
+                    dispatch(replace('/error'))
+                })
+        }, 2000)  
+    
+    }
+    
 }
 
 export function loadArticle(id) {

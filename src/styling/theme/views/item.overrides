@@ -1,3 +1,13 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+
+//.ui.selection.items > .item:hover {
+//  background: @selectionListHoverBackground;
+//  color: @selectionListHoverColor;
+//}
+
+.ui.items a.item.active .content .header {
+  color: @headerLinkHoverColor;
+}

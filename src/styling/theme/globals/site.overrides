@@ -6,3 +6,13 @@ code {
   background: #E0E1E2;
   border: @black dashed 1px;
 }
+
+p.input-title{
+
+    margin-bottom: 0.5em;
+    
+}
+
+.nbt-color{
+    
+}

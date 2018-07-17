@@ -1,3 +1,13 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+/* Selection List States */
+//@selectionListBackground: transparent;
+//@selectionListColor: @unselectedTextColor;
+//@selectionListHoverBackground: @subtleTransparentBlack;
+//@selectionListHoverColor: @hoveredTextColor;
+//@selectionListDownBackground: @transparentBlack;
+//@selectionListDownColor: @pressedTextColor;
+//@selectionListActiveBackground: @transparentBlack;
+//@selectionListActiveColor: @selectedTextColor;

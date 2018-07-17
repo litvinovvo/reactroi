@@ -1,3 +1,8 @@
 /*******************************
          Site Overrides
 *******************************/
+
+i.icon.float-right,
+i.icons.float-right {
+  float: right;
+}

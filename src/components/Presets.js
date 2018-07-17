@@ -2,10 +2,10 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {updateForm, initForm, loadPreset} from '../AC'
-import {Switch, Route, Redirect, NavLink} from 'react-router-dom'
+import {Switch, Route, Redirect, NavLink, Link} from 'react-router-dom'
 import history from '../history'
 import { reset,initialize,destroy } from 'redux-form'
-import { Button } from 'semantic-ui-react'
+import { Header,List,Image, Item, Button, Icon } from 'semantic-ui-react'
 import {arrToMapJs, mapToArrJs} from '../helpers'
 
 class Presets extends Component {
@@ -29,7 +29,7 @@ class Presets extends Component {
         const {presets,presetId} = nextProps
         const currentPresetId = this.props.presetId
 //                console.log(presetId)
-        console.log('presets will receive props')
+        console.log('presets will receive props',nextProps)
         if(presetId && (presetId != currentPresetId))this.setPreset(nextProps)
     }
 
@@ -44,27 +44,62 @@ class Presets extends Component {
 //        if(presetId)this.setPreset()
 
 
-        const presetsElements = presets.map(preset =><li key={preset.id} ><NavLink  activeStyle={{color: 'red'}} to={`/calc/${preset.id}`} onClick={this.handleClick(preset.form)}>{preset.title}</NavLink></li>)
+        const presetsElements = presets.map(preset =>
+        <Item key={preset.id}  >
+                
+        <Item.Image size="tiny" avatar src={preset.imgSrc } />
+        <Item.Content>
+        <Item.Header >{preset.title} </Item.Header>
+        <Item.Description>{preset.description} </Item.Description>
+        <Item.Extra>
+         <NavLink activeClassName=' ' to={`/calc/${preset.id}`}>
+             
+                       <Button size='tiny' >
+            Загрузить шаблон
+          </Button>
+             
+         </NavLink>
+
+    <Button animated='vertical' size='tiny' basic color='teal'>
+      <Button.Content hidden>Купить</Button.Content>
+      <Button.Content visible>
+        <Icon name='shop' />
+      </Button.Content>
+    </Button>          
+        </Item.Extra>        
+         </Item.Content>
+        </Item>)
         return(
         <div>
 
-            <h3>Шаблоны</h3>
-            <Button primary>Click Here</Button>
-            <ul>{presetsElements}</ul>
+            <Header as='h3'>Шаблоны</Header>
+
+            <Item.Group divided relaxed className='selection'>{presetsElements}</Item.Group>
         </div>
         )
+//        activeClassName='active'
+//<NavLink  activeStyle={{color: 'red'}} to={`/calc/${preset.id}`} onClick={this.handleClick(preset.form)}>{preset.title}</NavLink>        
+//<List relaxed>
+//    <List.Item>
+//      <Image avatar src='/assets/images/avatar/small/daniel.jpg' />
+//      <List.Content>
+//        <List.Header as='a'>Daniel Louise</List.Header>
+//        <List.Description>Last seen watching <a><b>Arrested Development</b></a> just now.</List.Description>
+//      </List.Content>
+//    </List.Item>        
 
     }
 
     setPreset(props){
-        const {formId, presetId,presets,initForm,initialize, current, loadPreset,reset,destroy} = props
+        const {formId,presets,initForm,initialize, current, loadPreset,reset,destroy} = props
+        let {presetId} = props
         const presetsMap = arrToMapJs(presets)
 
 //        const form = presets.reduce(function(form,preset){
 //            if(preset.id == presetId) return {...form,...preset.form}
 //            return {...form}
 //        },{})
-
+        if(!presetsMap[presetId])presetId = 'default'
         console.log("INITIALIZE",current.initialValues)
 //        reset(formId)
 //        destroy(formId)

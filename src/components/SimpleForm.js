@@ -1,117 +1,169 @@
 import React, { Component } from 'react'
-import { Field, Fields, reduxForm, formValueSelector, getFormMeta,getFormSyncErrors,focus,getFormValues } from 'redux-form'
+import { Field, FieldArray, reduxForm, formValueSelector,getFormSyncErrors,focus,getFormValues } from 'redux-form' 
 import {connect} from 'react-redux'
-import { Button, Checkbox, Input, Form,Label,Segment,Icon,Select,Message } from 'semantic-ui-react'
+import {currencies} from '../fixtures'
+import { Button, Checkbox, Input, Form,Label,Segment,Icon,Select,Message, Dropdown,Header } from 'semantic-ui-react'
 import {addField,removeField} from '../AC'
 import Slider, { Range } from 'rc-slider'
-import 'rc-slider/assets/index.css'
+import 'less/rc-slider.less'
+//import 'rc-slider/assets/index.css'
 
 class SimpleForm extends Component {
-
-
+    
+//   state = {
+//       inputError: false
+//   }    
+requiredVal = value => (value ? undefined : 'Поле обязательно для заполнения') 
+requiredNum = value => (value && !/[^0-9\.]/i.test(value) ? undefined : 'Необходимо ввести число')
+normalizeNum = value => (value && !/[^0-9\.]/i.test(value) ? value : value.replace(/[^0-9\.]/gim,'') )
 
    addNewItem = (e) => {
-    const { addField,clearFields,focus,change,valid,touch,blur, syncErrors,untouch,form,newItem,newItemFieldType } = this.props
+    const { addField,clearFields,focus,change,valid,touch,blur, syncErrors,untouch,form,newItem,newItemFieldType,currentDesign,values } = this.props
 //    const newName  = this.props[field]
 
-    console.log('is valid?',syncErrors)
-    if( syncErrors.newItem ){
-        touch(form,'newItem')
-        focus(form,'newItem')
-        return
-    }
-    if( syncErrors.newItemFieldType ){
-        touch(form,'newItemFieldType')
-        focus(form,'newItemFieldType')
-        return
-    }
-    addField({type: newItemFieldType, label: newItem})
+        this.props.handleSubmit(()=>{})
+       
+        console.log('is valid?',syncErrors)
+        if(!values || !values.newItem ){
+//        this.setState({ 
+//                inputError: true
+//        })
+            touch('newItem')
+            focus(form,'newItem')
+            return
+        }
+        if(!values || !values.newItemFieldType ){
+            touch(form,'newItemFieldType')
+            focus(form,'newItemFieldType')
+            return
+        }
+//        this.setState({ 
+//                inputError: false
+//        })
+        addField({type: newItemFieldType, label: newItem, index: currentDesign[newItemFieldType].length })
 
-    clearFields(form,false,false,'newItem')
-       untouch(form,'newItem')
+        clearFields(form,false,false,'newItem')
+           untouch(form,'newItem')
 
    }
 
-   removeItem = ({name,type}) => (e) => {
-       const { newinvestment,removeField,clearFields,focus,change } = this.props
-       removeField({type: type, name: name})
-       removeField({type: type, name: name + 'input'})
-       removeField({type: type, name: name + 'currency'})
+   removeItem = ({type,index,id}) => (e) => {
+
+       const { newinvestment,removeField,clearFields,focus,change,array } = this.props
+       
+//       arrayRemove(form:String, field:String, index:Number)       
+       array.remove(type,index)
+       removeField({type: type, id: id})
+//       removeField({type: type, id: id + 'input'})
+//       removeField({type: type, id: id + 'currency'})
    }
 
+   touchAll(){
+       console.log('touching all error fields')
+       const fields = this.props.syncErrors
+       var fieldsArr = []
+       if(!fields)return
+       for (var key in fields){
+           if(Array.isArray(fields[key])){
+           fields[key].forEach((item,i)=>{
+               for(var name in item){
+                   fieldsArr.push(`${key}[${i}].${name}`)
+               }
+           })               
+           } else {
+               for(var name in fields[key]){
+                   fieldsArr.push(`${key}.${name}`)
+               }
+               
+           }
 
+       }
+       this.props.touch(...fieldsArr)
+       console.log(fieldsArr)
+   }
 
    componentDidUpdate(){
        console.log('DID UPDATE',this.props.active)
        if(this.props.active && document.querySelector(`[name="${this.props.active}"]`))document.querySelector(`[name="${this.props.active}"]`).focus()
+       if(this.props.dirty)this.touchAll()
    }
 
     componentDidMount(){
         console.log('Form DID MOUNT')
     }
-   renderFields = (fields) => (
-  <div>
-    <div className="input-row">
-      <input {...fields.firstName.input} type="text"/>
-      {fields.firstName.meta.touched && fields.firstName.meta.error &&
-       <span className="error">{fields.firstName.meta.error}</span>}
-    </div>
-    <div className="input-row">
-      <input {...fields.lastName.input} type="text"/>
-      {fields.lastName.meta.touched && fields.lastName.meta.error &&
-       <span className="error">{fields.lastName.meta.error}</span>}
-    </div>
-  </div>
-)
+
    render (){
         const { handleSubmit, pristine, reset, submitting, roi,currentDesign,newinvestment,addField,clearFields } = this.props
         console.log('!simple form is rendering')
       return(
       <div>
+    
+<Header as='h3'>Параметры</Header>
+<Header as='h4'>Инвестиции</Header>
+    {
+            currentDesign.investments.length ? (<Segment.Group>{this.createInvestmentsFields(currentDesign.investments)}</Segment.Group>) : 
+            (<Message info>
+                <Message.Header>Нет элементов</Message.Header>
+                <p>Пожалуйста, добавьте хотя бы один элемент для расчёта.</p>
+             </Message>) 
+    }
+                    <Header as='h4'>Процедуры</Header>
+    {
+            currentDesign.services.length ? (<Segment.Group>{this.createServicesFields(currentDesign.services)}</Segment.Group>) : 
+            (<Message info>
+                <Message.Header>Нет элементов</Message.Header>
+                <p>Пожалуйста, добавьте хотя бы один элемент для расчёта.</p>
+             </Message>) 
+    }
+              <Header as='h4'>Расходы</Header>
+               
+      { 
+            currentDesign.costs.length ? (<Segment.Group>{this.createCostsFields(currentDesign.costs)}</Segment.Group>) : 
+            (<Message info>
+                <Message.Header>Нет элементов</Message.Header>
+                <p>Пожалуйста, добавьте хотя бы один элемент для расчёта.</p>
+             </Message>) 
+      }
+             
+              
 
 
+           <Header as='h4'>Общие параметры</Header>
 
-<Fields names={[ 'firstName', 'lastName' ]} component={this.renderFields}/>
-     <Segment.Group>
-      {this.createInvestmentsFields(currentDesign.investments)}
-      </Segment.Group>
-
-
-
-                    <br />
-               <Segment.Group>
-      {this.createServicesFields(currentDesign.services)}
-
-              </Segment.Group>
-
-          <br />
-               <Segment.Group>
-      {this.createCostsFields(currentDesign.costs)}
-
-              </Segment.Group>
-
-
-          <br />
-               <Segment.Group>
-      {this.createConsumablesFields(currentDesign.consumables)}
-      </Segment.Group>
-
+{this.createGlobalCurrencyField()}
 
           <Field
             name="newItem"
             component={this.renderAddNewItemField}
             type="text"
             label="Добавить элемент"
-            validate={[this.requiredVal]}
+
           />
 
       </div>
   )
   }
 
+//        <Segment.Group>
+//      {this.createConsumablesFields(currentDesign.consumables)}
+//      </Segment.Group>
 
+renderInvestments = ({ fields, meta: { error, submitFailed } }) => 
+    this.createInvestmentsFields(this.props.currentDesign.investments) 
+//        <div><Field
+//          name='fields.firstname'
+//          type="text"
+//          component='input'
+//          label="First Name"
+//        />
+//        </div>
+
+
+  
+  
 renderInputCurrencyField = ({
   input,
+    baseName,
     placeholder,
   label,
   type,
@@ -120,17 +172,38 @@ renderInputCurrencyField = ({
     <div>
       <Input {...input} error={touched && error && (() => true)()} placeholder={label} type={type} action >
            <input />
-                    <Field
-          name={input.name + 'currency'}
-
-          component={this.renderSelectField}
-          options={this.currencies}
-          label="Выберите валюту"
-
+            <Field
+              name={baseName + '.currency'}
+              component={this.renderSelectField}
+              options={currencies}
+              label="Выберите валюту"
+              validate = {[this.requiredVal]}
         />
       </Input>
-      {touched && error && <Message content={error} />}
+      {
+//        touched && error && <Message content={error} />
+    }
     </div>
+
+renderInputLabelFieldInverted = ({
+  input,
+  labelContent,
+  label,
+  type,
+  meta: { touched, error, warning }
+}) =>
+    <Label basic  {...((touched && error) ? {color: 'red'} : {}) } >
+    {
+
+        
+       labelContent 
+    }
+     <Label.Detail>
+     {input.value}
+     </Label.Detail>
+
+    
+    </Label>
 
 renderInputLabelField = ({
   input,
@@ -139,10 +212,24 @@ renderInputLabelField = ({
   type,
   meta: { touched, error, warning }
 }) =>
-    <div>
-      <Input {...input} error={touched && error && (() => true)()} placeholder={label} type={type} action label={{ basic: true, content: labelContent }} labelPosition='right' />
-      {touched && error && <Message content={error} />}
-    </div>
+    <Label basic  {...((touched && error) ? {color: 'red'} : {}) } >
+    {
+      //<Input {...input} size='small' error={touched && error && (() => true)()} placeholder={label} type={type} action label={{ basic: true, content: labelContent }} labelPosition='right'   
+        // />
+        input.value
+        
+    }
+     <Label.Detail>
+     {labelContent}
+     </Label.Detail>
+      
+      
+      
+      {
+        //touched && error && <Message content={error} />
+    }
+    
+    </Label>
 
 renderAddNewItemField = ({
   input,
@@ -151,11 +238,11 @@ renderAddNewItemField = ({
   meta: { touched, error, warning },
 }) =>
   <div>
-    <label>
-      {label}
-    </label>
+
+
     <div>
-      <Input {...input} error={touched && error && (() => true)()} placeholder={label} type={type} action >
+     <p>{label}</p>
+      <Input {...input} error={touched && !input.value && (() => true)()} placeholder={label} type={type} action >
            <input />
                                <Field
           name={input.name + 'FieldType'}
@@ -163,35 +250,46 @@ renderAddNewItemField = ({
           component={this.renderSelectField}
           options={this.fieldTypes}
           label="Выберите элемент"
-          validate={[this.requiredVal]}
+
 
         />
             <Button onClick={this.addNewItem}>Добавить</Button>
       </Input>
-      {touched &&
-        error &&
-          <Message warning content={error}
-              header="Не так быстро"     />}</div></div>
+      {
+//            touched &&
+//        !input.value &&
+//          <Message warning content={error}
+//              header="Не так быстро"     />
+        }</div></div>
 
 
 
 
- requiredVal = value => (value ? undefined : 'Поле обязательно для заполнения')
+
 
  createInvestmentsFields(fields) {
+
     return(
-        fields.map(investment =>
-        <Segment key={investment.name}>
-         <Label attached='top right' onRemove={this.removeItem({name: investment.name, type: 'investments'})} />
-         <label>{investment.label}</label>
-         <br />
+        fields.map((investment,index) =>
+        <Segment key={investment.id}>
+                       {
+//                           <Label size='mini' corner='true'  onRemove={this.removeItem({type: 'investments', index: index, id: investment.id})} />
+//                           <Button floated='right' onClick={this.removeItem({type: 'investments', index: index, id: investment.id})}><Icon name='close' /></Button>
+        }
+        
+        <Icon link fitted size="small" color="grey" className="float-right" onClick={this.removeItem({type: 'investments', index: index, id: investment.id})} name='close' />
+        
+         
+         <p className="input-title">{investment.label}</p>
 
           <Field
-            name={investment.name + 'input'}
+            name={`investments[${index}].input`}
             component={this.renderInputCurrencyField}
             type="text"
             label={investment.label}
-            validate={[this.requiredVal]}
+            validate={[this.requiredVal,this.requiredNum]}
+            baseName={`investments[${index}]`}
+            normalize={this.normalizeNum}
           />
 
         </Segment>
@@ -199,51 +297,76 @@ renderAddNewItemField = ({
     )
 }
 
+createGlobalCurrencyField () {
+       
+    return(
+        <Segment >
+            Валюта для расчётов:&nbsp;&nbsp;
+          <Field
+            name="global.currency"
+            type="text"
+            
+              component={this.renderSelectField}
+              options={currencies}
+              label="Выберите валюту"    
+              validate={[this.requiredVal]}        
+          />           
+        </Segment>
+
+
+        )
+}        
+        
 onSliderChange = (id) => ( data ) => {
     console.log('slider change', id,data)
 
        const { change } = this.props
        if(data instanceof Array){
-           change(id + 'Min',data[0])
-           change(id + 'Max',data[1])
-        }else change(id,data)
+           change(id + '.min',data[0])
+           change(id + '.max',data[1])
+        }else change(id + '.input',data)
 
 //    console.log(this.props.values)
 }
 
-getSliderValue = (name) => {
-    return (this.props.values && this.props.values[name + 'input']) ? +this.props.values[name + 'input'] : 0
+getSliderValue = (name,index) => {
+    return (this.props.values && this.props.values[name] && this.props.values[name][index] &&  this.props.values[name][index].input) ? +this.props.values[name][index].input : 0
 }
 
-getRangeValue = (name) => {
+getRangeValue = (name,index) => {
 
-    if(!this.props.values) return [0,0]
-    const min = this.props.values[name + 'inputRangeMin']
-    const max = this.props.values[name + 'inputRangeMax']
-    if(!max && min) return [+min,+max]
+    if(!this.props.values || !this.props.values[name] || !this.props.values[name][index]) return [0,0]
+    const min = this.props.values[name][index].min
+    const max = this.props.values[name][index].max
+    if(!max && min) return [+min,+min]
     if(max && !min) return [0,+max]
     if(max && min) return [+min,+max]
 }
 
  createCostsFields(fields) {
+  
     return(
-        fields.map(costs =>
-        <Segment key={costs.name}>
-         <Label attached='top right' onRemove={this.removeItem({name: costs.name, type: 'costs'})} />
-         <label>{costs.label}</label>
-         <br />
-            <div>
-                    <Slider value={this.getSliderValue(costs.name)}  onChange={this.onSliderChange(costs.name + 'input')}/>
-            </div>
-          <Field
-
-            name={costs.name + 'input'}
+        fields.map((costs,index) =>
+        <Segment key={costs.id}>
+         <Icon link fitted size="small" color="grey" className="float-right" onClick={this.removeItem({type: 'costs', index: index, id: costs.id})} name='close' />
+         
+ 
+      
+              {costs.label}&nbsp;
+              <Field
+            name={`costs[${index}].input`}
             component={this.renderInputLabelField}
             type="text"
             label={costs.label}
-            validate={[this.requiredVal]}
+            validate={[this.requiredVal, this.requiredNum]}
             labelContent="%"
-          />
+            normalize={this.normalizeNum}
+            /> 
+            <br /><br />  
+            <div>
+                    <Slider value={this.getSliderValue('costs',index)}  onChange={this.onSliderChange(`costs[${index}]`)}/>
+            </div>
+ 
 
         </Segment>
         )
@@ -251,44 +374,47 @@ getRangeValue = (name) => {
 }
 
  createServicesFields(fields) {
+       
     return(
-        fields.map(services =>
-        <Segment key={services.name}>
-         <Label attached='top right' onRemove={this.removeItem({name: services.name, type: 'services'})} />
-         <label>{services.label}</label>
-
+        fields.map((services,index) =>
+        <Segment key={services.id}>
+         <Icon link fitted size="small" color="grey" className="float-right" onClick={this.removeItem({type: 'services', index: index, id: services.id})} name='close' />
+        <p className="input-title">{services.label}</p>
           <Field
-            name={services.name + 'input'}
+            name={`services[${index}].input`}
             component={this.renderInputCurrencyField}
             type="text"
             label={services.label}
             validate={[this.requiredVal]}
+            normalize={this.normalizeNum}
             placeholder="Стоимость процедуры"
+            baseName={`services[${index}]`}
           />
+            <br />Процедур в неделю&nbsp;
+          <Field
 
-         <br />
-           <label>Загрузка в день</label>
+            name={`services[${index}].min`}
+            component={this.renderInputLabelFieldInverted}
+            type="text"
+            labelContent="от"
+            label={services.label}
+            validate={[this.requiredVal]}
+            normalize={this.normalizeNum}
+          />
+          <Field
+            name={`services[${index}].max`}
+            component={this.renderInputLabelFieldInverted}
+            labelContent="до"
+            type="text"
+            label={services.label}
+            validate={[this.requiredVal]}
+            normalize={this.normalizeNum}
+          />            
+           <br /><br />
             <div>
-                    <Slider.Range value={this.getRangeValue(services.name)} defaultValue={[3, 10]} max={50} onChange={this.onSliderChange(services.name + 'inputRange')}/>
+                    <Slider.Range value={this.getRangeValue('services',index)} defaultValue={[3, 10]} max={50} onChange={this.onSliderChange(`services[${index}]`)}/>
             </div>
-          <Field
 
-            name={services.name + 'inputRangeMin'}
-            component={this.renderInputLabelField}
-            type="text"
-            labelContent="процедур мин."
-            label={services.label}
-            validate={[this.requiredVal]}
-          />
-          <Field
-
-            name={services.name + 'inputRangeMax'}
-            component={this.renderInputLabelField}
-            labelContent="процедур макс."
-            type="text"
-            label={services.label}
-            validate={[this.requiredVal]}
-          />
 
         </Segment>
         )
@@ -297,21 +423,22 @@ getRangeValue = (name) => {
 
  createConsumablesFields(fields) {
     return(
-        fields.map(consumables =>
-        <Segment key={consumables.name}>
-         <Label attached='top right' onRemove={this.removeItem({name: consumables.name, type: 'consumables'})} />
-         <label>{consumables.label}</label>
-         <br />
+        fields.map((consumables,index) =>
+        <Segment key={consumables.id}>
+         <Label attached='top right' onRemove={this.removeItem({index: index, type: 'consumables', id: consumables.id})} />
 
+         
+         <p className="input-title">{consumables.label}</p>
           <Field
-            name={consumables.name + 'inputValue'}
+            name={`consumables[${index}].input`}
             component={this.renderInputCurrencyField}
             type="text"
             label='Стоимость'
             validate={[this.requiredVal]}
+            baseName={`consumables[${index}]`}
           />
           <Field
-            name={consumables.name + 'inputResource'}
+            name={`consumables[${index}].resource`}
             component={this.renderInputLabelField}
             type="text"
             label='Ресурс'
@@ -319,7 +446,7 @@ getRangeValue = (name) => {
             labelContent="процедур"
           />
           <Field
-            name={consumables.name + 'inputBundle'}
+            name={`consumables[${index}].bundle`}
             component={this.renderInputLabelField}
             type="text"
             label='В комплекте'
@@ -333,17 +460,17 @@ getRangeValue = (name) => {
 }
 
 //<Select compact options={options} defaultValue='rub' />
-currencies = [
-  { key: 'ru', text: 'руб.', value: 'rub' },
-  { key: 'us', text: '$', value: 'usd' },
-  { key: 'kz', text: 'тенге', value: 'tenge' },
-]
+//currencies = [
+//  { key: 'ru', text: 'руб.', value: 'RUB' },
+//  { key: 'us', text: '$', value: 'USD' },
+//  { key: 'kz', text: 'тенге', value: 'KZT' },
+//]
 
 fieldTypes = [
   { key: 'investments', text: 'Инвестиция', value: 'investments' },
   { key: 'costs', text: 'Расходы', value: 'costs' },
   { key: 'services', text: 'Процедуры', value: 'services' },
-  { key: 'consumables', text: 'Расходные материалы', value: 'consumables' },
+//  { key: 'consumables', text: 'Расходные материалы', value: 'consumables' },
 ]
 
 renderSelectField = ({
@@ -353,16 +480,20 @@ renderSelectField = ({
   children,
   ...custom
 }) =>
-     <Select
-    compact
+     <Dropdown
+    compact selection
     {...input}
+    error={touched && error && (() => true)()}
     onChange={(param,data) => input.onChange(data.value)}
     value= {input.value }
     placeholder={label}
+    
     {...custom}
     />
 }
 
+     
+    
 const selector = formValueSelector('simple')
 
 SimpleForm = connect(
@@ -379,7 +510,7 @@ SimpleForm = connect(
           newservices: newservices,
           active: state.form['simple'] ? state.form['simple'].active : null,
           values: getFormValues('simple')(state),
-          syncErrors: getFormSyncErrors('simple')(state)
+          syncErrors: getFormSyncErrors('simple')(state),
 
       })
   },{ addField, removeField,focus }

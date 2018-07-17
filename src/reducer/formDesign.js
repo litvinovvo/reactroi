@@ -38,7 +38,7 @@ export default (formDesign = defaultState, action) => {
 
 
             const mapFromArr = arrToMapJs(formDesign[payload.type])
-            delete mapFromArr[payload.name]
+            delete mapFromArr[payload.id]
 
             return {...formDesign, [payload.type]: mapToArrJs(mapFromArr)}
         }

@@ -50,21 +50,26 @@ module.exports = {
     // We are waiting for https://github.com/facebookincubator/create-react-app/issues/2176.
     // { parser: { requireEnsure: false } },
     rules: [
+//        { test: /\.css/, include: /node_modules\/rc-slider/, loader: 'style-loader!css-loader'},
+        { test: /\.css/, exclude: /node_modules\/rc-slider/, loader: 'style-loader!css-loader?modules'},
             {
           // Transform our own .css files with PostCSS and CSS-modules
           test: /\.css$/,
           exclude: /node_modules/,
           use: ['style-loader', 'css-loader'],
-        }, {
+        }, 
+        {
           // Do not transform vendor's CSS with CSS-modules
           // The point is that they remain in global scope.
           // Since we require these CSS files in our JS or CSS files,
           // they will be a part of our compilation either way.
           // So, no need for ExtractTextPlugin here.
           test: /\.css$/,
-          include: /node_modules/,
+//            include: /node_modules/,
+          include: [/node_modules\/semantic-ui-less/,],
           use: ['style-loader', 'css-loader'],
         },
+
       // Process JS with Babel.
       {
         test: /\.(js|jsx)$/,
@@ -163,12 +168,13 @@ module.exports = {
           ],
         }),
       },
+       
       // "url" loader works like "file" loader except that it embeds assets
       // smaller than specified limit in bytes as data URLs to avoid requests.
       // A missing `test` is equivalent to a match.
       {
         test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
-        loader: require.resolve('url-loader'),
+        loader: require.resolve('file-loader'),
         options: {
           limit: 10000,
           name: 'static/media/[name].[hash:8].[ext]',
